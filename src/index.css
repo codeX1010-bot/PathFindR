@@ -1,0 +1,90 @@
+:root {
+  /* Colors */
+  --bg-primary: #0f172a;
+  /* Deep slate blue/black */
+  --bg-secondary: #1e293b;
+  --text-primary: #f8fafc;
+  --text-secondary: #94a3b8;
+
+  /* Accents */
+  --accent-primary: #38bdf8;
+  /* Sky blue */
+  --accent-secondary: #818cf8;
+  /* Indigo */
+  --accent-glow: rgba(56, 189, 248, 0.5);
+
+  /* Glassmorphism */
+  --glass-bg: rgba(30, 41, 59, 0.7);
+  --glass-border: rgba(255, 255, 255, 0.1);
+  --glass-shadow: 0 4px 30px rgba(0, 0, 0, 0.1);
+  --glass-blur: 10px;
+
+  /* Typography */
+  --font-main: 'Inter', system-ui, -apple-system, sans-serif;
+
+  /* Spacing */
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 2rem;
+  --radius-md: 12px;
+  --radius-lg: 24px;
+
+  font-family: var(--font-main);
+  line-height: 1.5;
+  font-weight: 400;
+
+  color-scheme: dark;
+  color: var(--text-primary);
+  background-color: var(--bg-primary);
+  background-image:
+    radial-gradient(at 0% 0%, rgba(56, 189, 248, 0.15) 0px, transparent 50%),
+    radial-gradient(at 100% 100%, rgba(129, 140, 248, 0.15) 0px, transparent 50%);
+  background-attachment: fixed;
+
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  margin: 0;
+  display: flex;
+  place-items: center;
+  justify-content: center;
+  min-width: 320px;
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Utilities */
+.glass-panel {
+  background: var(--glass-bg);
+  backdrop-filter: blur(var(--glass-blur));
+  -webkit-backdrop-filter: blur(var(--glass-blur));
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--glass-shadow);
+  border-radius: var(--radius-lg);
+}
+
+.btn-primary {
+  background: linear-gradient(135deg, var(--accent-primary), var(--accent-secondary));
+  color: white;
+  border: none;
+  padding: 0.75rem 1.5rem;
+  border-radius: var(--radius-md);
+  font-weight: 600;
+  cursor: pointer;
+  transition: transform 0.2s, box-shadow 0.2s;
+}
+
+.btn-primary:hover {
+  transform: translateY(-2px);
+  box-shadow: 0 0 15px var(--accent-glow);
+}
+
+.text-gradient {
+  background: linear-gradient(to right, var(--accent-primary), var(--accent-secondary));
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+}
