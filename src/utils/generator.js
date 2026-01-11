@@ -1,6 +1,6 @@
 export const generateRoadmap = async (goal, knowledge, style) => {
     try {
-        const response = await fetch('http://localhost:3000/api/generate-roadmap', {
+        const response = await fetch('/api/generate-roadmap', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json',
