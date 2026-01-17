@@ -1,5 +1,6 @@
 export const generateRoadmap = async (goal, knowledge, style) => {
     try {
+        console.log("Frontend: Initiating API call to /api/generate-roadmap with:", { goal, knowledge, style }); // DEBUG LOG
         const response = await fetch('/api/generate-roadmap', {
             method: 'POST',
             headers: {
@@ -7,9 +8,17 @@ export const generateRoadmap = async (goal, knowledge, style) => {
             },
             body: JSON.stringify({ goal, knowledge, style }),
         });
+        console.log("Frontend: Response received status:", response.status); // DEBUG LOG
 
         if (!response.ok) {
-            throw new Error(`Server error: ${response.status}`);
+            const errorText = await response.text();
+            console.error("Backend Error Response:", errorText);
+            try {
+                const errorJson = JSON.parse(errorText);
+                console.error("Backend Error Details:", errorJson);
+            } catch (e) { /* ignore json parse error */ }
+
+            throw new Error(`Server error: ${response.status} - ${errorText}`);
         }
 
         const data = await response.json();
