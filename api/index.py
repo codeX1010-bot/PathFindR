@@ -24,7 +24,7 @@ def generate_roadmap_ai(goal, knowledge, style):
         raise Exception("GEMINI_API_KEY is not configured")
         
     try:
-        model = genai.GenerativeModel('gemini-2.5-flash')
+        model = genai.GenerativeModel('gemini-1.5-flash')
         
         prompt = f"""
       Create a step-by-step learning roadmap for: "{goal}".
