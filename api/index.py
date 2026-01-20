@@ -21,8 +21,10 @@ def generate_roadmap_ai(goal, knowledge, style):
         raise Exception("GEMINI_API_KEY is not configured")
         
     try:
-        from google import genai
-        client = genai.Client(api_key=GEMINI_API_KEY)
+        import requests
+        
+        # Prepare payload for Gemini HTTP API
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
         
         prompt = f"""
       Create a step-by-step learning roadmap for: "{goal}".
@@ -56,12 +58,25 @@ def generate_roadmap_ai(goal, knowledge, style):
       Adjust the content depth based on the knowledge level.
       Adjust the resource types based on the learning style.
     """
+        
+        payload = {
+            "contents": [{
+                "parts": [{"text": prompt}]
+            }]
+        }
 
-        response = client.models.generate_content(
-            model='gemini-2.0-flash', 
-            contents=prompt
-        )
-        text = response.text
+        response = requests.post(url, json=payload)
+        
+        if response.status_code != 200:
+            raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
+            
+        result = response.json()
+        
+        # safely extract text from response structure
+        try:
+            text = result['candidates'][0]['content']['parts'][0]['text']
+        except (KeyError, IndexError):
+             raise Exception(f"Invalid API response format: {result}")
 
         # Clean up markdown if present
         text = re.sub(r'```json', '', text)
