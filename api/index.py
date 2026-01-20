@@ -1,7 +1,7 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-import google.generativeai as genai
+from google import genai
 import json
 import re
 from dotenv import load_dotenv
@@ -12,11 +12,9 @@ load_dotenv()
 app = Flask(__name__)
 CORS(app)
 
-# Initialize Gemini
+# Initialize Gemini Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if GEMINI_API_KEY:
-    genai.configure(api_key=GEMINI_API_KEY)
-else:
+if not GEMINI_API_KEY:
     print("Warning: GEMINI_API_KEY not found in environment variables")
 
 def generate_roadmap_ai(goal, knowledge, style):
@@ -24,7 +22,7 @@ def generate_roadmap_ai(goal, knowledge, style):
         raise Exception("GEMINI_API_KEY is not configured")
         
     try:
-        model = genai.GenerativeModel('gemini-2.0-flash')
+        client = genai.Client(api_key=GEMINI_API_KEY)
         
         prompt = f"""
       Create a step-by-step learning roadmap for: "{goal}".
@@ -59,7 +57,10 @@ def generate_roadmap_ai(goal, knowledge, style):
       Adjust the resource types based on the learning style.
     """
 
-        response = model.generate_content(prompt)
+        response = client.models.generate_content(
+            model='gemini-2.0-flash', 
+            contents=prompt
+        )
         text = response.text
 
         # Clean up markdown if present
