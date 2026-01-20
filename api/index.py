@@ -1,7 +1,6 @@
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 import os
-from google import genai
 import json
 import re
 from dotenv import load_dotenv
@@ -22,6 +21,7 @@ def generate_roadmap_ai(goal, knowledge, style):
         raise Exception("GEMINI_API_KEY is not configured")
         
     try:
+        from google import genai
         client = genai.Client(api_key=GEMINI_API_KEY)
         
         prompt = f"""
@@ -72,6 +72,10 @@ def generate_roadmap_ai(goal, knowledge, style):
     except Exception as e:
         print(f"AI Generation Error: {e}")
         raise Exception(f"Failed to generate content via Gemini: {str(e)}")
+
+@app.route('/api/health', methods=['GET'])
+def health_check():
+    return jsonify({"status": "ok", "message": "Backend is running"}), 200
 
 @app.route('/api/generate-roadmap', methods=['POST', 'OPTIONS'])
 def generate_roadmap():
