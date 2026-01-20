@@ -90,7 +90,14 @@ def generate_roadmap_ai(goal, knowledge, style):
 
 @app.route('/api/health', methods=['GET'])
 def health_check():
-    return jsonify({"status": "ok", "message": "Backend is running"}), 200
+    status = {"status": "ok", "message": "Backend is running"}
+    try:
+        import requests
+        status["dependencies"] = "requests installed"
+    except ImportError as e:
+        status["dependencies"] = f"requests missing: {e}"
+        return jsonify(status), 500
+    return jsonify(status), 200
 
 @app.route('/api/generate-roadmap', methods=['POST', 'OPTIONS'])
 def generate_roadmap():
