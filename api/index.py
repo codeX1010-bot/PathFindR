@@ -3,6 +3,7 @@ from flask_cors import CORS
 import os
 import json
 import re
+import requests
 from dotenv import load_dotenv
 
 # Load environment variables
@@ -10,6 +11,9 @@ load_dotenv()
 
 app = Flask(__name__)
 CORS(app)
+
+print("DEBUG: Loading api/index.py... Model configured: gemini-flash-latest")
+
 
 # Initialize Gemini Client
 GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
@@ -21,17 +25,17 @@ def generate_roadmap_ai(goal, knowledge, style):
         raise Exception("GEMINI_API_KEY is not configured")
         
     try:
-        import requests
-        
         # Prepare payload for Gemini HTTP API
-        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent?key={GEMINI_API_KEY}"
+        # Switching to gemini-flash-latest to bypass 2.0-flash daily quota limits
+        url = f"https://generativelanguage.googleapis.com/v1beta/models/gemini-flash-latest:generateContent?key={GEMINI_API_KEY}"
+        print(f"DEBUG: Calling Gemini API with URL: {url}")
         
         prompt = f"""
       Create a step-by-step learning roadmap for: "{goal}".
       Current Knowledge Level: "{knowledge}".
       Preferred Learning Style: "{style}".
       
-      Return ONLY a VALID JSON array.Do not include any markdown formatting(like ```json).
+      Return ONLY a VALID JSON array. Do not include any markdown formatting (like ```json or ```).
       
       The JSON structure must be an array of objects, where each object has:
       - "title": string
@@ -64,8 +68,25 @@ def generate_roadmap_ai(goal, knowledge, style):
                 "parts": [{"text": prompt}]
             }]
         }
-
-        response = requests.post(url, json=payload)
+        
+        
+        import time
+        max_retries = 3
+        for attempt in range(max_retries):
+            response = requests.post(url, json=payload)
+            
+            if response.status_code == 200:
+                break
+            elif response.status_code == 429:
+                wait_time = 5
+                print(f"Rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
+                time.sleep(wait_time)
+            else:
+                # Other errors, don't retry, just raise
+                raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
+        else:
+             # Loop finished without breaking
+            raise Exception(f"Gemini API Error {response.status_code}: {response.text} (Max retries exceeded)")
         
         if response.status_code != 200:
             raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
@@ -79,10 +100,16 @@ def generate_roadmap_ai(goal, knowledge, style):
              raise Exception(f"Invalid API response format: {result}")
 
         # Clean up markdown if present
-        text = re.sub(r'```json', '', text)
-        text = re.sub(r'```', '', text)
+        text = re.sub(r'```json\s*', '', text)
+        text = re.sub(r'```\s*', '', text)
         text = text.strip()
-
+        
+        # Try to find the JSON array/object start and end if there's extra text
+        json_start = text.find('[')
+        json_end = text.rfind(']') + 1
+        if json_start != -1 and json_end != -1:
+             text = text[json_start:json_end]
+             
         return json.loads(text)
     except Exception as e:
         print(f"AI Generation Error: {e}")
@@ -125,5 +152,5 @@ def generate_roadmap():
 
 # For local development
 if __name__ == '__main__':
-    port = int(os.getenv('PORT', 3000))
+    port = int(os.getenv('PORT', 3001))
     app.run(port=port)

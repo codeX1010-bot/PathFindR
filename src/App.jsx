@@ -5,19 +5,22 @@ import RoadmapDisplay from './components/RoadmapDisplay';
 import { generateRoadmap } from './utils/generator';
 import './App.css';
 
-function App() {
+export default function App() {
   const [roadmap, setRoadmap] = useState(null);
   const [loading, setLoading] = useState(false);
   const [savedData, setSavedData] = useState(null);
+  const [error, setError] = useState(null);
 
   const handleGenerate = async (data) => {
     setLoading(true);
+    setError(null);
     setSavedData(data); // Save input for later
     try {
       const result = await generateRoadmap(data.goal, data.knowledge, data.style);
       setRoadmap(result);
     } catch (error) {
       console.error("Failed to generate", error);
+      setError(error.message || "Failed to generate roadmap. Please try again.");
     } finally {
       setLoading(false);
     }
@@ -25,6 +28,7 @@ function App() {
 
   const handleReset = () => {
     setRoadmap(null);
+    setError(null);
     // Do NOT clear savedData so form can pre-fill
   };
 
@@ -48,10 +52,23 @@ function App() {
       ) : roadmap ? (
         <RoadmapDisplay roadmap={roadmap} onReset={handleReset} />
       ) : (
-        <InputForm onGenerate={handleGenerate} initialValues={savedData} />
+        <>
+          {error && (
+            <div style={{
+              padding: '1rem',
+              marginBottom: '1.5rem',
+              borderRadius: '8px',
+              background: 'rgba(255,100,100,0.15)',
+              border: '1px solid rgba(255,100,100,0.3)',
+              color: '#ff8080',
+              textAlign: 'center'
+            }}>
+              <strong>Error:</strong> {error}
+            </div>
+          )}
+          <InputForm onGenerate={handleGenerate} initialValues={savedData} />
+        </>
       )}
     </Layout>
   );
 }
-
-export default App;
