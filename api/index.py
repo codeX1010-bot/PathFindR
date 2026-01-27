@@ -74,15 +74,15 @@ def generate_roadmap_ai(goal, knowledge, style):
         
         # Check if running on Vercel (where timeout is strict 10s on Hobby plan)
         is_vercel = os.environ.get('VERCEL') == '1'
-        
         if is_vercel:
-            # On Vercel, we CANNOT sleep/retry because of the 10s timeout.
-            # We must return the 429 error to the client and let the CLIENT wait.
+            # On Vercel, cold starts can take 1-3 seconds.
+            # Use strict 6s timeout to ensure we return BEFORE the 10s hard limit kills us.
             max_retries = 1 
+            request_timeout = 6 
         else:
             max_retries = 3 
-            
-        request_timeout = 9 if is_vercel else 30 # 9s timeout (just under 10s limit)
+            request_timeout = 30
+
 
         for attempt in range(max_retries):
             try:
@@ -91,14 +91,9 @@ def generate_roadmap_ai(goal, knowledge, style):
                 if response.status_code == 200:
                     break
                 elif response.status_code == 429:
-                    if is_vercel:
-                        # Return 429 explicitly so frontend can handle the wait
-                        print("Rate limit on Vercel. Returning 429 to client.")
-                        return {"error": "Rate limit exceeded", "retry_after": 5, "status": 429}
-                    
-                    wait_time = 5
-                    print(f"Rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
-                    time.sleep(wait_time)
+                    # Return 429 explicitly so frontend can handle the wait
+                    print("Rate limit hit. Returning 429 to client.")
+                    return {"error": "Rate limit exceeded", "retry_after": 5, "status": 429}
                 else:
                     raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
             except (requests.exceptions.Timeout, Exception) as e:
