@@ -76,35 +76,38 @@ def generate_roadmap_ai(goal, knowledge, style):
         is_vercel = os.environ.get('VERCEL') == '1'
         
         if is_vercel:
-            max_retries = 1 # Fail fast on Vercel to avoid 504 Gateway Timeout / Function Invocation Failed
+            max_retries = 1 
             print("DEBUG: Running on Vercel, disabling retries to prevent timeout.")
         else:
-            max_retries = 3 # Local development can wait
+            max_retries = 3 
             
+        request_timeout = 7 if is_vercel else 30 # 7s timeout for Vercel (safe margin for 10s limit)
+
         for attempt in range(max_retries):
-            response = requests.post(url, json=payload)
-            
-            if response.status_code == 200:
-                break
-            elif response.status_code == 429:
-                wait_time = 5
-                if is_vercel:
-                    # Don't sleep on Vercel, just break and let it raise the exception
-                    print("Rate limit hit on Vercel. Failing fast.")
-                    break
+            try:
+                response = requests.post(url, json=payload, timeout=request_timeout)
                 
-                print(f"Rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
-                time.sleep(wait_time)
-            else:
-                # Other errors, don't retry, just raise
-                raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
-        else:
-             # Loop finished without breaking
-            raise Exception(f"Gemini API Error {response.status_code}: {response.text} (Max retries exceeded)")
+                if response.status_code == 200:
+                    break
+                elif response.status_code == 429:
+                    wait_time = 5
+                    if is_vercel:
+                        print("Rate limit hit on Vercel. Failing fast.")
+                        raise Exception("Rate limit hit on Vercel")
+                    
+                    print(f"Rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
+                    time.sleep(wait_time)
+                else:
+                    raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
+            except (requests.exceptions.Timeout, Exception) as e:
+                 print(f"Attempt {attempt+1} error: {e}")
+                 if attempt == max_retries - 1:
+                     raise e
         
-        if response.status_code != 200:
-            raise Exception(f"Gemini API Error {response.status_code}: {response.text}")
-            
+        # Validate response
+        if 'response' not in locals() or response.status_code != 200:
+             raise Exception("Failed to get valid response")
+
         result = response.json()
         
         # safely extract text from response structure
@@ -127,6 +130,29 @@ def generate_roadmap_ai(goal, knowledge, style):
         return json.loads(text)
     except Exception as e:
         print(f"AI Generation Error: {e}")
+        
+        # EMERGENCY BACKUP FOR VERCEL PRESENTATION
+        # If anything goes wrong (timeout, rate limit, crash), return this safe data
+        if os.environ.get('VERCEL') == '1':
+            print("Activating Vercel Backup Protocol")
+            return [
+                {
+                    "title": "Introduction to Python (Backup Mode)",
+                    "description": "We switched to backup mode because the live AI request took too long. Start here to learn the basics.",
+                    "links": [{"label": "Python Basics", "url": "https://www.youtube.com/results?search_query=python+basics"}]
+                },
+                {
+                    "title": "Control Structures",
+                    "description": "Learn loops and if-statements. This is essential logic for programming.",
+                    "links": [{"label": "Python Logic Tutorial", "url": "https://www.google.com/search?q=python+logic"}]
+                },
+                {
+                    "title": "Functions",
+                    "description": "Modularize your code with functions.",
+                    "links": [{"label": "Python Functions", "url": "https://docs.python.org/3/tutorial/controlflow.html#defining-functions"}]
+                }
+            ]
+        
         raise Exception(f"Failed to generate content via Gemini: {str(e)}")
 
 @app.route('/api/health', methods=['GET'])
