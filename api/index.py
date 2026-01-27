@@ -76,12 +76,13 @@ def generate_roadmap_ai(goal, knowledge, style):
         is_vercel = os.environ.get('VERCEL') == '1'
         
         if is_vercel:
+            # On Vercel, we CANNOT sleep/retry because of the 10s timeout.
+            # We must return the 429 error to the client and let the CLIENT wait.
             max_retries = 1 
-            print("DEBUG: Running on Vercel, disabling retries to prevent timeout.")
         else:
             max_retries = 3 
             
-        request_timeout = 7 if is_vercel else 30 # 7s timeout for Vercel (safe margin for 10s limit)
+        request_timeout = 9 if is_vercel else 30 # 9s timeout (just under 10s limit)
 
         for attempt in range(max_retries):
             try:
@@ -90,11 +91,12 @@ def generate_roadmap_ai(goal, knowledge, style):
                 if response.status_code == 200:
                     break
                 elif response.status_code == 429:
-                    wait_time = 5
                     if is_vercel:
-                        print("Rate limit hit on Vercel. Failing fast.")
-                        raise Exception("Rate limit hit on Vercel")
+                        # Return 429 explicitly so frontend can handle the wait
+                        print("Rate limit on Vercel. Returning 429 to client.")
+                        return {"error": "Rate limit exceeded", "retry_after": 5, "status": 429}
                     
+                    wait_time = 5
                     print(f"Rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
                     time.sleep(wait_time)
                 else:
@@ -105,6 +107,10 @@ def generate_roadmap_ai(goal, knowledge, style):
                      raise e
         
         # Validate response
+        if isinstance(response, dict) and response.get('status') == 429:
+            # Pass the 429 up
+            return response
+            
         if 'response' not in locals() or response.status_code != 200:
              raise Exception("Failed to get valid response")
 
@@ -130,29 +136,6 @@ def generate_roadmap_ai(goal, knowledge, style):
         return json.loads(text)
     except Exception as e:
         print(f"AI Generation Error: {e}")
-        
-        # EMERGENCY BACKUP FOR VERCEL PRESENTATION
-        # If anything goes wrong (timeout, rate limit, crash), return this safe data
-        if os.environ.get('VERCEL') == '1':
-            print("Activating Vercel Backup Protocol")
-            return [
-                {
-                    "title": "Introduction to Python (Backup Mode)",
-                    "description": "We switched to backup mode because the live AI request took too long. Start here to learn the basics.",
-                    "links": [{"label": "Python Basics", "url": "https://www.youtube.com/results?search_query=python+basics"}]
-                },
-                {
-                    "title": "Control Structures",
-                    "description": "Learn loops and if-statements. This is essential logic for programming.",
-                    "links": [{"label": "Python Logic Tutorial", "url": "https://www.google.com/search?q=python+logic"}]
-                },
-                {
-                    "title": "Functions",
-                    "description": "Modularize your code with functions.",
-                    "links": [{"label": "Python Functions", "url": "https://docs.python.org/3/tutorial/controlflow.html#defining-functions"}]
-                }
-            ]
-        
         raise Exception(f"Failed to generate content via Gemini: {str(e)}")
 
 @app.route('/api/health', methods=['GET'])

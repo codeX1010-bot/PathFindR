@@ -15,15 +15,41 @@ export default function App() {
     setLoading(true);
     setError(null);
     setSavedData(data); // Save input for later
-    try {
-      const result = await generateRoadmap(data.goal, data.knowledge, data.style);
-      setRoadmap(result);
-    } catch (error) {
-      console.error("Failed to generate", error);
-      setError(error.message || "Failed to generate roadmap. Please try again.");
-    } finally {
-      setLoading(false);
-    }
+
+    // Client-side retry logic
+    let attempts = 0;
+    const maxAttempts = 5;
+
+    const tryGenerate = async () => {
+      try {
+        attempts++;
+        const result = await generateRoadmap(data.goal, data.knowledge, data.style);
+
+        // Check if backend returned a 429 "Rate Limit" object
+        if (result && result.status === 429) {
+          if (attempts < maxAttempts) {
+            setError(`Rate limit hit. Waiting 5s... (Attempt ${attempts}/${maxAttempts})`);
+            await new Promise(resolve => setTimeout(resolve, 5000)); // Wait in browser (no timeout limit here)
+            return tryGenerate(); // Recursive retry
+          } else {
+            throw new Error("Rate limit exceeded. Please try again later.");
+          }
+        }
+
+        setRoadmap(result);
+        setError(null); // Clear any temp errors
+      } catch (error) {
+        console.error("Failed to generate", error);
+        setError(error.message || "Failed to generate roadmap. Please try again.");
+      } finally {
+        if (attempts >= maxAttempts || (roadmap && roadmap.status !== 429)) {
+          setLoading(false);
+        }
+      }
+    };
+
+    await tryGenerate();
+    setLoading(false); // Ensure loading stops
   };
 
   const handleReset = () => {
