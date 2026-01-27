@@ -71,7 +71,16 @@ def generate_roadmap_ai(goal, knowledge, style):
         
         
         import time
-        max_retries = 3
+        
+        # Check if running on Vercel (where timeout is strict 10s on Hobby plan)
+        is_vercel = os.environ.get('VERCEL') == '1'
+        
+        if is_vercel:
+            max_retries = 1 # Fail fast on Vercel to avoid 504 Gateway Timeout / Function Invocation Failed
+            print("DEBUG: Running on Vercel, disabling retries to prevent timeout.")
+        else:
+            max_retries = 3 # Local development can wait
+            
         for attempt in range(max_retries):
             response = requests.post(url, json=payload)
             
@@ -79,6 +88,11 @@ def generate_roadmap_ai(goal, knowledge, style):
                 break
             elif response.status_code == 429:
                 wait_time = 5
+                if is_vercel:
+                    # Don't sleep on Vercel, just break and let it raise the exception
+                    print("Rate limit hit on Vercel. Failing fast.")
+                    break
+                
                 print(f"Rate limit hit. Retrying in {wait_time} seconds... (Attempt {attempt + 1}/{max_retries})")
                 time.sleep(wait_time)
             else:
