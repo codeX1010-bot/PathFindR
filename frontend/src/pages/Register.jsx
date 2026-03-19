@@ -39,11 +39,15 @@ export default function Register() {
                 <div className="absolute -top-20 -right-20 w-40 h-40 bg-brand rounded-full blur-3xl opacity-20"></div>
                 <div className="absolute -bottom-20 -left-20 w-40 h-40 bg-accent rounded-full blur-3xl opacity-20"></div>
 
-                <div className="relative z-10">
-                    <div className="flex flex-col items-center mb-8">
-                        <Compass className="w-12 h-12 text-brand mb-2" />
+                <motion.div 
+                    initial={{ scale: 0.95, opacity: 0 }}
+                    animate={{ scale: 1, opacity: 1 }}
+                    className="relative z-10 p-8 md:p-10" // Adjusted class to fit the existing structure
+                >
+                    <div className="flex flex-col items-center mb-6">
+                        <img src="/logo.png" alt="PathFindR Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_15px_rgba(236,72,153,0.3)] border border-white/10 mb-2" />
                         <h1 className="text-3xl font-heading font-bold text-center">Join PathFindR</h1>
-                        <p className="text-text-secondary mt-2">Start your personalized learning journey</p>
+                        <p className="text-text-secondary mt-2 text-center">Start your personalized learning journey</p>
                     </div>
 
                     {error && (
@@ -101,7 +105,7 @@ export default function Register() {
                             Log in securely
                         </Link>
                     </p>
-                </div>
+                </motion.div>
             </div>
         </div>
     );

@@ -45,15 +45,17 @@ export default function Login() {
             <div className="absolute top-1/4 left-1/4 w-96 h-96 bg-brand opacity-10 rounded-full blur-[100px] pointer-events-none" />
             <div className="absolute bottom-1/4 right-1/4 w-96 h-96 bg-accent opacity-10 rounded-full blur-[100px] pointer-events-none" />
 
-            <div className="glass-card w-full max-w-md relative z-10">
-                <div className="flex flex-col items-center mb-8">
-                    <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-brand to-accent flex items-center justify-center mb-4 shadow-lg shadow-brand/30">
-                        <LogIn className="w-8 h-8 text-white" />
-                    </div>
-                    <h1 className="text-3xl font-heading font-bold text-center">Welcome Back</h1>
-                    <p className="text-text-secondary mt-2">Log in to view your learning paths</p>
+            <motion.div 
+                initial={{ scale: 0.95, opacity: 0 }}
+                animate={{ scale: 1, opacity: 1 }}
+                className="glass-card w-full max-w-md p-8 md:p-10 z-10"
+            >
+                <div className="flex justify-center mb-6">
+                    <img src="/logo.png" alt="PathFindR Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_15px_rgba(236,72,153,0.3)] border border-white/10" />
                 </div>
-
+                <h1 className="text-3xl font-heading font-bold text-center mb-2">Welcome Back</h1>
+                <p className="text-text-secondary mt-2">Log in to view your learning paths</p>
+                <br />
                 {successMessage && (
                     <div className="bg-success/10 border border-success/30 text-success p-3 rounded-lg mb-6 text-sm text-center">
                         {successMessage}
@@ -106,7 +108,7 @@ export default function Login() {
                         Create an account
                     </Link>
                 </p>
-            </div>
+            </motion.div>
         </div>
     );
 }

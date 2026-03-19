@@ -51,11 +51,14 @@ export default function Dashboard() {
         <div className="min-h-screen py-10 px-4 md:px-8 max-w-6xl mx-auto">
             {/* Header */}
             <header className="flex justify-between items-center mb-12">
-                <div>
-                    <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand to-accent">
-                        Welcome back, {user?.name.split(' ')[0]}
-                    </h1>
-                    <p className="text-text-secondary mt-1">Ready to continue your journey?</p>
+                <div className="flex items-center gap-4">
+                    <img src="/logo.png" alt="PathFindR Logo" className="w-12 h-12 rounded-xl shadow-[0_0_10px_rgba(236,72,153,0.2)] border border-white/10" />
+                    <div>
+                        <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand to-accent">
+                            Welcome back, {user?.name.split(' ')[0]}
+                        </h1>
+                        <p className="text-text-secondary mt-1">Ready to continue your journey?</p>
+                    </div>
                 </div>
                 <button
                     onClick={handleLogout}

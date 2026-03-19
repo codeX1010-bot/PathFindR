@@ -7,14 +7,14 @@ export default {
     theme: {
         extend: {
             colors: {
-                'bg-dark': '#0f172a',
-                'bg-card': 'rgba(30, 41, 59, 0.7)',
+                'bg-dark': '#0b0f19',
+                'bg-card': 'rgba(17, 24, 39, 0.7)',
                 'text-primary': '#f8fafc',
                 'text-secondary': '#94a3b8',
-                'brand': '#3b82f6',
-                'brand-hover': '#2563eb',
-                'accent': '#8b5cf6',
-                'success': '#10b981',
+                'brand': '#2dd4bf',      // Teal-400
+                'brand-hover': '#14b8a6', // Teal-500
+                'accent': '#38bdf8',     // Sky-400
+                'success': '#10b981',    // Emerald-500
             },
             fontFamily: {
                 heading: ['Plus Jakarta Sans', 'sans-serif'],

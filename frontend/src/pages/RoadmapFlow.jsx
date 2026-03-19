@@ -58,8 +58,8 @@ export default function RoadmapFlow() {
                         className="glass-card w-full max-w-2xl z-10 p-8 md:p-12"
                     >
                         <div className="mb-8 text-center">
-                            <div className="inline-flex items-center justify-center w-16 h-16 rounded-2xl bg-brand/10 text-brand mb-6 shadow-lg shadow-brand/20">
-                                <Sparkles size={32} />
+                            <div className="flex justify-center mb-6">
+                                <img src="/logo.png" alt="PathFindR Logo" className="w-20 h-20 rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] border border-white/10" />
                             </div>
                             <h1 className="text-3xl md:text-4xl font-heading font-bold mb-4">What do you want to learn?</h1>
                             <p className="text-text-secondary text-lg">
