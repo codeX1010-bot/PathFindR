@@ -6,8 +6,8 @@ echo =========================================
 :: Activate the virtual environment
 call venv\Scripts\activate.bat
 
-:: Change directory to backend and run the app
-cd backend
-python app.py
+:: Change directory to api and run the app
+cd api
+python index.py
 
 pause

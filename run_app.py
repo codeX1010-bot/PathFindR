@@ -1,7 +1,7 @@
 import os
 import subprocess
 import sys
-from backend.mongo_db import seed_curriculum_data
+from api.mongo_db import seed_curriculum_data
 
 def main():
     print("Welcome to PathFindR Setup & Runner!")
@@ -20,7 +20,7 @@ def main():
     print("Leave this window open to keep the server running.\n")
     try:
         # Run Flask development server
-        subprocess.run(["python", "backend/app.py"], check=True)
+        subprocess.run(["python", "api/index.py"], check=True)
     except KeyboardInterrupt:
         print("\nServer shutting down gracefully. Goodbye!")
 
