@@ -32,7 +32,8 @@ export default function Login() {
             // Redirect to dashboard
             navigate('/dashboard');
         } catch (err) {
-            setError(err.response?.data?.error || 'Invalid credentials. Please try again.');
+            const errorData = err.response?.data?.error;
+            setError(typeof errorData === 'string' ? errorData : (errorData?.message || 'Invalid credentials. Please try again.'));
         } finally {
             setIsLoading(false);
         }
