@@ -1,4 +1,9 @@
 import os
+import sys
+
+# Tell the Vercel Python runtime to look inside the 'api' folder for modules
+sys.path.append(os.path.dirname(os.path.abspath(__file__)))
+
 from flask import Flask, request, jsonify
 from flask_cors import CORS
 from dotenv import load_dotenv

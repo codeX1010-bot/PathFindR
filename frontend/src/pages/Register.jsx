@@ -24,7 +24,8 @@ export default function Register() {
             await axios.post(`${API_BASE}/register`, { name, email, password });
             navigate('/login', { state: { message: "Account created! Please log in." } });
         } catch (err) {
-            setError(err.response?.data?.error || 'Failed to register. Please try again.');
+            const errorData = err.response?.data?.error;
+            setError(typeof errorData === 'string' ? errorData : (errorData?.message || 'Failed to register. Please try again.'));
         } finally {
             setIsLoading(false);
         }
