@@ -6,7 +6,7 @@ import { ArrowLeft, ExternalLink, CheckCircle2, Circle, Video, BookOpen, Headpho
 import { motion, AnimatePresence } from 'framer-motion';
 import { useAuth } from '../context/AuthContext';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
 
 const generateGCalLink = (node) => {
     const text = encodeURIComponent(`Learning: ${node.title} `);

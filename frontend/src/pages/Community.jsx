@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { Users, LayoutDashboard, GitFork, Eye, Clock } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
 
 export default function Community() {
     const { token } = useAuth();

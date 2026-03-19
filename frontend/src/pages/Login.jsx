@@ -4,7 +4,7 @@ import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
 import { LogIn } from 'lucide-react';
 
-const API_BASE = 'http://127.0.0.1:5000/auth';
+const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/auth` : '/auth';
 
 export default function Login() {
     const [email, setEmail] = useState('');

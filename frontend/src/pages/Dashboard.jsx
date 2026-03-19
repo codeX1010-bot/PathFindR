@@ -6,7 +6,7 @@ import { LogOut, Plus, Map, Clock, Users, List, GitMerge, Globe, Share2 } from '
 import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
 import 'reactflow/dist/style.css';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
 
 export default function Dashboard() {
     const { user, logout } = useAuth();

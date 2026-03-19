@@ -4,7 +4,7 @@ import axios from 'axios';
 import { Sparkles, ArrowRight, BrainCircuit } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
-const API_BASE = 'http://127.0.0.1:5000/api';
+const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
 
 export default function RoadmapFlow() {
     const [prompt, setPrompt] = useState('');
