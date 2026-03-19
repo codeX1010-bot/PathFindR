@@ -1,0 +1,73 @@
+Project Name: PathFindR: Personalized Learning GPS
+Version: 2.0 (Detailed)
+Date: January 2, 2026
+Prepared By: [Your Name/Team Name]
+1. Introduction
+1.1 Purpose
+The purpose of this document is to clearly define the architectural, functional, and non-functional requirements for the development of "PathFindR." This document serves as the primary reference for the design, development, and testing phases of the project. It ensures that the final product aligns with the goal of solving "analysis paralysis" for self-directed learners.
+1.2 Project Scope
+In-Scope:
+Development of a web-based user interface for inputting learning goals.
+Implementation of a backend Python-based "Rule Engine" to process user inputs.
+Creation of a relational (MySQL) or NoSQL (MongoDB) database to store curated learning resources.
+Generation of a dynamic, interactive roadmap that tracks user progress.
+Out-of-Scope:
+Content creation (the system aggregates existing links, it does not create new tutorials).
+Live mentorship or human tutoring features.
+Mobile App development (the project is a Responsive Web App only).
+1.3 Definitions & Acronyms
+SRS: Software Requirement Specification.
+GPS (Learning GPS): A metaphor for the system's ability to navigate a user from point A (current skill) to point B (goal).
+JSON: JavaScript Object Notation (used for data transfer).
+API: Application Programming Interface.
+CRUD: Create, Read, Update, Delete (database operations).
+2. Overall Description
+2.1 Product Perspective
+PathFindR is a standalone web application. It interacts with:
+Users: Who input data and consume content.
+Database: Which houses the metadata for thousands of articles and videos.
+External Content: The system directs users to third-party sites (YouTube, Medium, Official Docs).
+2.2 User Characteristics
+The system caters to three specific user classes:
+The Absolute Beginner: Has zero coding knowledge. Needs linear, step-by-step guidance starting from "Hello World."
+The Career Switcher: Has domain knowledge in another field but wants to learn specific tools (e.g., a statistician learning Python).
+The Visual vs. Text Learner: Users who have a strong preference for video tutorials over documentation, or vice versa.
+2.3 Key Assumptions & Dependencies
+Assumption: Users have a stable internet connection to access the web app and the external learning links.
+Dependency: The system relies on the availability of the external URLs (YouTube, etc.). A link-checker mechanism may be required in future updates.
+3. Detailed Functional Requirements
+3.1 Feature: User Onboarding & Profiling
+Description: The entry point where the system gathers necessary data to personalize the experience.
+FR-1.1: The system shall display a "Get Started" wizard.
+FR-1.2: The system must capture User Goal via a dropdown menu (e.g., "Data Science," "Web Dev," "App Dev").
+FR-1.3: The system must capture Current Skill Level via a multi-select checkbox (e.g., [x] Variables, [x] Loops, [ ] OOP).
+FR-1.4: The system must capture Learning Style (Video, Article, Interactive).
+FR-1.5: The system shall create a persistent user profile in the database upon registration.
+3.2 Feature: The Recommendation Logic (The "Brain")
+Description: The Python backend logic that processes the input.
+FR-2.1 (Filtering): The system shall query the database for all resources tagged with the selected User Goal.
+FR-2.2 (Exclusion): The system shall compare the retrieved resources against the Current Skill Level provided by the user. Any resource tagged with a skill the user already possesses shall be excluded from the roadmap.
+FR-2.3 (Weighting): The system shall assign a "relevance score" to remaining resources. Resources matching the user's Learning Style get a higher score.
+FR-2.4 (Sequencing): The system shall order the final list based on difficulty_level (Ascending: 1 to 5) to ensure a logical learning curve.
+3.3 Feature: Dynamic Roadmap Interface
+Description: The visual representation of the learning path.
+FR-3.1: The roadmap shall be displayed as a vertical timeline.
+FR-3.2: Each node on the timeline must display: Title, Description, Estimated Time, and a Link.
+FR-3.3: Users must be able to click a "Mark as Complete" button on each node.
+FR-3.4: Upon completion, the node visual style must change (e.g., turn green or grey out), and the progress bar at the top of the screen must update.
+4. System Design & Database Schema
+4.1 Architecture Diagram
+The system follows the MVC (Model-View-Controller) pattern.
+View (Frontend): HTML/JS handles user interaction.
+Controller (Backend): Python Flask/Django routes the data.
+Model (Database): MySQL/MongoDB stores the structure.
+
+PathFindR: Your Custom Learning GPS
+Imagine you want to learn a new skill, like Data Science. You know there are thousands of articles, videos, and courses out there, but you don't know where to start or what to do next.
+PathFindR is a web application that acts as your Personalized GPS for learning.
+1. What it Does
+You tell the system three things:
+ * Your Goal: (e.g., "I want to become a Python developer.")
+ * What You Know Now: (e.g., "I know the basics, like loops and variables.")
+ * How You Like to Learn: (e.g., "I prefer short videos and hands-on projects.")
+PathFindR then instantly generates a step-by-step roadmap—a unique list of tasks, videos, and articles, arranged in the best order for you—to get you from your current level to your goal.
