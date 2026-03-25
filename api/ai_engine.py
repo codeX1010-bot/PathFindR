@@ -43,6 +43,11 @@ def generate_ai_roadmap(prompt, learning_style, current_skills):
     They prefer to learn via: "{learning_style}".
     They already have some baseline skills: {', '.join(current_skills) if current_skills else 'None'}.
     
+    CRITICAL INSTRUCTION: You MUST deeply tailor the roadmap content (titles, descriptions, and checklists) to match their "{learning_style}" learning style:
+    - If "Hands-on (Projects)": The roadmap MUST focus entirely on building projects, writing code, and active exercises. Checklists must be practical tasks (e.g., "Build a basic API", "Deploy the app").
+    - If "Visual (Video/Articles)": The roadmap MUST focus heavily on conceptual understanding, watching tutorials, and analyzing theory. Checklists must be study tasks (e.g., "Watch a crash course on X", "Analyze the architecture diagram").
+    - If "Mixed (Both)": Balance theory and practice equally across the nodes.
+    
     You must structure your response ONLY as a raw JSON array of objects representing nodes in a learning sequence. 
     Do not include markdown blocks like ```json. Just raw text starting with [ and ending with ].
     Generate between 5 and 7 logical steps for them to achieve this goal from scratch (skipping the skills they already know).
