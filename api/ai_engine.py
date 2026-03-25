@@ -2,8 +2,9 @@ import os
 from groq import Groq
 import json
 import urllib.parse
+import urllib.request
+import re
 from dotenv import load_dotenv
-from youtubesearchpython import VideosSearch
 
 load_dotenv()
 
@@ -23,10 +24,10 @@ def get_top_youtube_link(query):
     If it fails, it returns a standard YouTube search URL.
     """
     try:
-        videos_search = VideosSearch(query, limit=1)
-        results = videos_search.result()
-        if results and results.get('result') and len(results['result']) > 0:
-            return results['result'][0]['link']
+        html = urllib.request.urlopen("https://www.youtube.com/results?search_query=" + urllib.parse.quote(query))
+        video_ids = re.findall(r"watch\?v=(\S{11})", html.read().decode())
+        if video_ids:
+            return "https://www.youtube.com/watch?v=" + video_ids[0]
     except Exception as e:
         print(f"YouTube search error for '{query}': {e}")
     

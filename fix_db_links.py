@@ -21,14 +21,15 @@ def fix_all_roadmaps():
         
         for node in nodes:
             # Fix video links
-            if "video_link" in node and node["video_link"]:
-                query = node["video_link"]
-                if "youtube.com/watch" not in query and "youtu.be" not in query:
-                    if query.startswith("http"):
-                        query = f"{node.get('title', '')} tutorial course"
-                    print(f"Fixing video link for node: {node.get('title', 'Unknown')}")
-                    node["video_link"] = get_top_youtube_link(query)
-                    changed = True
+            query = node.get("video_link", "")
+            if query.startswith("http"):
+                query = f"{node.get('title', '')} tutorial course"
+            else:
+                query = f"{node.get('title', '')} tutorial course"
+            
+            print(f"Fixing video link for node: {node.get('title', 'Unknown')}")
+            node["video_link"] = get_top_youtube_link(query)
+            changed = True
                     
             # Fix article links
             if "article_link" in node and node["article_link"]:
