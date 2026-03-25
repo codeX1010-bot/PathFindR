@@ -118,10 +118,13 @@ def generate_roadmap(current_user):
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
         
-    # Call Gemini
+    # Call Gemini (Groq now)
     roadmap_nodes = generate_ai_roadmap(prompt, learning_style, current_skills)
     
     if not roadmap_nodes:
+        from ai_engine import client
+        if not client:
+             return jsonify({"error": "CRITICAL CONFIG ERROR: You forgot to add GROQ_API_KEY to your Vercel Environment Variables dashboard! The API key only exists on your local machine."}), 500
         return jsonify({"error": "Failed to generate roadmap from AI. Try again."}), 500
         
     # Save the generated roadmap structurally to MongoDB
