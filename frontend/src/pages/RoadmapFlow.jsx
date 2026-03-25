@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import { Sparkles, ArrowRight, BrainCircuit } from 'lucide-react';
+import { Sparkles, ArrowRight, BrainCircuit, ArrowLeft } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
 
 const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
@@ -57,7 +57,18 @@ export default function RoadmapFlow() {
                         transition={{ duration: 0.3 }}
                         className="glass-card w-full max-w-2xl z-10 p-8 md:p-12"
                     >
-                        <div className="mb-8 text-center">
+                        {/* Back Button */}
+                        <div className="absolute top-4 md:top-8 left-4 md:left-8 z-20">
+                            <button
+                                onClick={() => navigate('/dashboard')}
+                                className="flex items-center text-text-secondary hover:text-white transition-colors"
+                            >
+                                <ArrowLeft className="w-5 h-5 mr-2" />
+                                Dashboard
+                            </button>
+                        </div>
+
+                        <div className="mb-8 text-center pt-8 md:pt-0">
                             <div className="flex justify-center mb-6">
                                 <img src="/logo.png" alt="PathFindR Logo" className="w-20 h-20 rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] border border-white/10" />
                             </div>
