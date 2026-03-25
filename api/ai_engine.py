@@ -79,22 +79,36 @@ def generate_ai_roadmap(prompt, learning_style, current_skills):
             
         roadmap_nodes = json.loads(response_text)
         
-        # Post-process: Fetch real YouTube links for the generated queries
+        # Post-process: Fetch real YouTube links and construct reliable search links
         for node in roadmap_nodes:
+            # Video Link
             if "video_link" in node and node["video_link"]:
                 query = node["video_link"]
-                if not query.startswith("http"):
-                    node["video_link"] = get_top_youtube_link(query)
-            
+                if query.startswith("http"):
+                    query = f"{node['title']} tutorial course"
+                node["video_link"] = get_top_youtube_link(query)
+            else:
+                node["video_link"] = get_top_youtube_link(f"{node['title']} tutorial course")
+
+            # Article Link
             if "article_link" in node and node["article_link"]:
                 query = node["article_link"]
-                if not query.startswith("http"):
-                    node["article_link"] = f"https://www.google.com/search?q={urllib.parse.quote(query)}"
-            
+                if query.startswith("http"):
+                    query = f"{node['title']} tutorial documentation"
+                node["article_link"] = f"https://www.google.com/search?q={urllib.parse.quote(query)}"
+            else:
+                query = f"{node['title']} tutorial documentation"
+                node["article_link"] = f"https://www.google.com/search?q={urllib.parse.quote(query)}"
+
+            # Podcast Link
             if "podcast_link" in node and node["podcast_link"]:
                 query = node["podcast_link"]
-                if not query.startswith("http"):
-                    node["podcast_link"] = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
+                if query.startswith("http"):
+                    query = f"{node['title']} podcast"
+                node["podcast_link"] = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
+            else:
+                query = f"{node['title']} podcast"
+                node["podcast_link"] = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
 
         return roadmap_nodes
         
