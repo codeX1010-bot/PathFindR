@@ -8,6 +8,9 @@ import Dashboard from './pages/Dashboard';
 import RoadmapFlow from './pages/RoadmapFlow';
 import RoadmapView from './pages/RoadmapView';
 import Community from './pages/Community';
+import Trash from './pages/Trash';
+
+import TabNavigation from './components/TabNavigation';
 
 // Protected Route Wrapper
 const ProtectedRoute = ({ children }) => {
@@ -19,6 +22,18 @@ const ProtectedRoute = ({ children }) => {
   return children;
 };
 
+// Main Layout with Tabs
+const MainLayout = ({ children }) => {
+  return (
+    <div className="flex flex-col min-h-screen">
+      <TabNavigation />
+      <div className="flex-grow">
+        {children}
+      </div>
+    </div>
+  );
+};
+
 function App() {
   return (
     <Router>
@@ -27,23 +42,40 @@ function App() {
         <Routes>
           <Route path="/login" element={<Login />} />
           <Route path="/register" element={<Register />} />
-          <Route path="/community" element={<Community />} />
+          
+          <Route path="/community" element={
+            <MainLayout>
+              <Community />
+            </MainLayout>
+          } />
 
           <Route path="/dashboard" element={
             <ProtectedRoute>
-              <Dashboard />
+              <MainLayout>
+                <Dashboard />
+              </MainLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/new-roadmap" element={
             <ProtectedRoute>
-              <RoadmapFlow />
+              <MainLayout>
+                <RoadmapFlow />
+              </MainLayout>
             </ProtectedRoute>
           } />
 
           <Route path="/roadmap" element={
             <ProtectedRoute>
               <RoadmapView />
+            </ProtectedRoute>
+          } />
+
+          <Route path="/trash" element={
+            <ProtectedRoute>
+              <MainLayout>
+                <Trash />
+              </MainLayout>
             </ProtectedRoute>
           } />
 

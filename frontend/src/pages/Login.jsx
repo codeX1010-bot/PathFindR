@@ -2,7 +2,7 @@ import React, { useState } from 'react';
 import { useNavigate, Link, useLocation } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { LogIn } from 'lucide-react';
+import { LogIn, Eye, EyeOff } from 'lucide-react';
 import { motion } from 'framer-motion';
 
 const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/auth` : '/auth';
@@ -10,6 +10,7 @@ const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BAS
 export default function Login() {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
+    const [showPassword, setShowPassword] = useState(false);
     const [error, setError] = useState('');
     const [isLoading, setIsLoading] = useState(false);
 
@@ -52,7 +53,7 @@ export default function Login() {
                 className="glass-card w-full max-w-md p-8 md:p-10 z-10"
             >
                 <div className="flex justify-center mb-6">
-                    <img src="/logo.png" alt="PathFindR Logo" className="w-16 h-16 rounded-2xl shadow-[0_0_15px_rgba(236,72,153,0.3)] border border-white/10" />
+                    <img src="/logo.png" alt="PathFindR Logo" className="w-28 h-28 rounded-3xl shadow-[0_0_20px_rgba(236,72,153,0.4)] border border-white/10" />
                 </div>
                 <h1 className="text-3xl font-heading font-bold text-center mb-2">Welcome Back</h1>
                 <p className="text-text-secondary mt-2">Log in to view your learning paths</p>
@@ -88,14 +89,24 @@ export default function Login() {
                         <label className="block text-sm font-heading font-medium mb-1.5 focus:text-brand transition-colors">
                             Password
                         </label>
-                        <input
-                            type="password"
-                            className="input-field shadow-inner"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
-                            required
-                        />
+                        <div className="relative">
+                            <input
+                                type={showPassword ? "text" : "password"}
+                                className="input-field shadow-inner pr-12"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => setPassword(e.target.value)}
+                                required
+                            />
+                            <button
+                                type="button"
+                                onClick={() => setShowPassword(!showPassword)}
+                                className="absolute right-3 top-1/2 -translate-y-1/2 text-text-secondary hover:text-white transition-colors p-1"
+                                tabIndex="-1"
+                            >
+                                {showPassword ? <EyeOff size={18} /> : <Eye size={18} />}
+                            </button>
+                        </div>
                     </div>
 
                     <button type="submit" className="btn-primary mt-8 shadow-brand/20" disabled={isLoading}>

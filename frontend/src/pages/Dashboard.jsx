@@ -2,11 +2,19 @@ import React, { useEffect, useState, useMemo } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import axios from 'axios';
 import { useAuth } from '../context/AuthContext';
-import { LogOut, Plus, Map, Clock, Users, List, GitMerge, Globe, Share2 } from 'lucide-react';
-import ReactFlow, { Background, Controls, MiniMap } from 'reactflow';
+import { LogOut, Plus, Map, Clock, Users, List, GitMerge, Globe, Share2, Trash2 } from 'lucide-react';
+import ReactFlow, { Background, Controls, ReactFlowProvider } from 'reactflow';
 import 'reactflow/dist/style.css';
 
 const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
+
+// Normalize any casing (ALL CAPS, lowercase, mixed) to Title Case
+const toTitleCase = (str) => {
+    if (!str) return '';
+    // Strip redundant leading/trailing quotes and apply title case
+    const cleanStr = str.trim().replace(/^["']|["']$/g, '');
+    return cleanStr.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+};
 
 export default function Dashboard() {
     const { user, logout } = useAuth();
@@ -14,6 +22,18 @@ export default function Dashboard() {
     const [roadmaps, setRoadmaps] = useState([]);
     const [isLoading, setIsLoading] = useState(true);
     const [viewMode, setViewMode] = useState('list'); // 'list' | 'tree'
+    const [isDark, setIsDark] = useState(
+        () => document.documentElement.getAttribute('data-theme') !== 'light'
+    );
+
+    // Keep isDark in sync with theme toggle
+    useEffect(() => {
+        const observer = new MutationObserver(() => {
+            setIsDark(document.documentElement.getAttribute('data-theme') !== 'light');
+        });
+        observer.observe(document.documentElement, { attributes: true, attributeFilter: ['data-theme'] });
+        return () => observer.disconnect();
+    }, []);
 
     useEffect(() => {
         const fetchRoadmaps = async () => {
@@ -32,6 +52,175 @@ export default function Dashboard() {
         fetchRoadmaps();
     }, []);
 
+    const { nodes, edges } = useMemo(() => {
+        const n = [];
+        const e = [];
+
+        const totalRoadmaps = roadmaps?.length || 0;
+        const rootY = Math.max(totalRoadmaps * 110, 200);
+
+        // Theme colors
+        const colors = isDark ? {
+            rootBg: 'linear-gradient(135deg, #1a0a2e, #0f111a)',
+            rootBorder: 'rgba(236,72,153,0.8)',
+            rootShadow: '0 0 25px rgba(236,72,153,0.4)',
+            rootText: 'white',
+            curriculumBg: 'linear-gradient(135deg, #0d1f2d, #0f111a)',
+            curriculumBorder: 'rgba(45,212,191,0.5)',
+            curriculumShadow: '0 0 15px rgba(45,212,191,0.2)',
+            curriculumText: 'white',
+            completedNodeBg: 'linear-gradient(135deg, #052e1b, #0f1a14)',
+            completedBorder: 'rgba(16,185,129,0.6)',
+            completedShadow: '0 0 12px rgba(16,185,129,0.25)',
+            pendingBg: 'rgba(255,255,255,0.03)',
+            pendingBorder: 'rgba(255,255,255,0.08)',
+            nodeText: 'rgba(255,255,255,0.9)',
+            nodeTextDim: 'rgba(255,255,255,0.5)',
+        } : {
+            rootBg: 'linear-gradient(135deg, #e0f2fe, #f0fdf4)',
+            rootBorder: '#ec4899',
+            rootShadow: '0 0 20px rgba(236,72,153,0.25)',
+            rootText: '#0f172a',
+            curriculumBg: 'linear-gradient(135deg, #f0fdfa, #ecfdf5)',
+            curriculumBorder: '#2dd4bf',
+            curriculumShadow: '0 0 12px rgba(45,212,191,0.15)',
+            curriculumText: '#0f172a',
+            completedNodeBg: 'linear-gradient(135deg, #f0fdf4, #dcfce7)',
+            completedBorder: '#10b981',
+            completedShadow: '0 0 10px rgba(16,185,129,0.2)',
+            pendingBg: 'rgba(0,0,0,0.04)',
+            pendingBorder: 'rgba(0,0,0,0.12)',
+            nodeText: '#1e293b',
+            nodeTextDim: '#64748b',
+        };
+
+        // Root "Brain" Node — glowing pink
+        n.push({
+            id: 'root',
+            data: {
+                label: (
+                    <div className="flex flex-col items-center gap-1 py-1">
+                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#ec4899', opacity: 0.7 }}>My</span>
+                        <strong className="text-lg font-heading leading-tight" style={{ color: colors.rootText }}>{user?.name?.split(' ')[0] || 'My'}'s Brain</strong>
+                    </div>
+                )
+            },
+            position: { x: 30, y: rootY },
+            style: {
+                background: colors.rootBg,
+                border: `2px solid ${colors.rootBorder}`,
+                borderRadius: '16px',
+                boxShadow: `${colors.rootShadow}, inset 0 0 20px rgba(236,72,153,0.05)`,
+                color: colors.rootText,
+                padding: '12px 16px',
+                width: '160px',
+                fontSize: '14px',
+            },
+        });
+
+        (roadmaps || []).forEach((map, index) => {
+            const startY = index * 220 + 30;
+            const roadmapNodeId = `map-${map._id}`;
+            const completedCount = map.completed_node_ids?.length || 0;
+            const totalCount = map.nodes?.length || 0;
+            const progressPct = totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+            // Roadmap Node
+            n.push({
+                id: roadmapNodeId,
+                data: {
+                    label: (
+                        <div className="flex flex-col gap-1">
+                            <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#2dd4bf', opacity: 0.85 }}>Curriculum</span>
+                            <strong className="text-sm font-semibold leading-snug line-clamp-2" style={{ color: colors.curriculumText }}>
+                                {map.original_prompt?.toLowerCase().replace(/\b\w/g, c => c.toUpperCase()).slice(0, 40)}
+                            </strong>
+                            <span className="text-xs mt-1" style={{ color: colors.nodeTextDim }}>{completedCount}/{totalCount} done · {progressPct}%</span>
+                        </div>
+                    )
+                },
+                position: { x: 280, y: startY },
+                style: {
+                    background: colors.curriculumBg,
+                    border: `1.5px solid ${colors.curriculumBorder}`,
+                    borderRadius: '14px',
+                    boxShadow: colors.curriculumShadow,
+                    color: colors.curriculumText,
+                    padding: '10px 14px',
+                    width: '200px',
+                    fontSize: '13px',
+                },
+                sourcePosition: 'right',
+                targetPosition: 'left',
+            });
+
+            e.push({
+                id: `e-root-${roadmapNodeId}`,
+                source: 'root',
+                target: roadmapNodeId,
+                animated: true,
+                style: { stroke: 'rgba(236,72,153,0.7)', strokeWidth: 2.5 },
+                type: 'smoothstep',
+            });
+
+            let previousId = roadmapNodeId;
+            let xPos = 580;
+
+            if (map.nodes) {
+                map.nodes.forEach((node) => {
+                    const isCompleted = map.completed_node_ids?.includes(node.id);
+                    const nodeId = `node-${map._id}-${node.id}`;
+
+                    n.push({
+                        id: nodeId,
+                        data: {
+                            label: (
+                                <div className="flex flex-col gap-0.5">
+                                    {isCompleted && (
+                                        <span className="text-xs font-bold uppercase tracking-widest" style={{ color: '#10b981', opacity: 0.9 }}>✓ Done</span>
+                                    )}
+                                    <span className="text-xs font-semibold leading-snug line-clamp-2" style={{ color: isCompleted ? colors.nodeText : colors.nodeTextDim }}>
+                                        {node.title}
+                                    </span>
+                                </div>
+                            )
+                        },
+                        position: { x: xPos, y: startY + 10 },
+                        style: {
+                            background: isCompleted ? colors.completedNodeBg : colors.pendingBg,
+                            border: isCompleted ? `1.5px solid ${colors.completedBorder}` : `1.5px solid ${colors.pendingBorder}`,
+                            borderRadius: '10px',
+                            boxShadow: isCompleted ? colors.completedShadow : 'none',
+                            color: colors.nodeText,
+                            padding: '8px 12px',
+                            width: '155px',
+                            fontSize: '12px',
+                        },
+                        sourcePosition: 'right',
+                        targetPosition: 'left',
+                    });
+
+                    e.push({
+                        id: `e-${previousId}-${nodeId}`,
+                        source: previousId,
+                        target: nodeId,
+                        animated: isCompleted,
+                        style: {
+                            stroke: isCompleted ? 'rgba(16,185,129,0.7)' : 'rgba(255,255,255,0.1)',
+                            strokeWidth: isCompleted ? 2 : 1,
+                        },
+                        type: 'smoothstep',
+                    });
+
+                    previousId = nodeId;
+                    xPos += 210;
+                });
+            }
+        });
+
+        return { nodes: n, edges: e };
+    }, [roadmaps, user]);
+
     const handleLogout = () => {
         logout();
         navigate('/login');
@@ -42,20 +231,29 @@ export default function Dashboard() {
         try {
             const newStatus = !map.is_public;
             await axios.post(`${API_BASE}/roadmaps/${map._id}/publish`, { is_public: newStatus });
-
-            // Update local state
             setRoadmaps(prev => prev.map(r => r._id === map._id ? { ...r, is_public: newStatus } : r));
         } catch (err) {
             console.error("Failed to toggle publish status", err);
         }
     };
 
+    const handleTrash = async (e, mapId) => {
+        e.stopPropagation();
+        try {
+            await axios.post(`${API_BASE}/roadmaps/${mapId}/trash`, {}, {
+                headers: { Authorization: `Bearer ${user?.token}` }
+            });
+            setRoadmaps(prev => prev.filter(r => r._id !== mapId));
+        } catch (err) {
+            console.error('Failed to delete roadmap', err);
+        }
+    };
+
     return (
-        <div className="min-h-screen py-10 px-4 md:px-8 max-w-6xl mx-auto">
+        <div className="min-h-screen py-10 px-4 md:px-8 w-full">
             {/* Header */}
             <header className="flex justify-between items-center mb-12">
                 <div className="flex items-center gap-4">
-                    <img src="/logo.png" alt="PathFindR Logo" className="w-12 h-12 rounded-xl shadow-[0_0_10px_rgba(236,72,153,0.2)] border border-white/10" />
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand to-accent">
                             Welcome back, {user?.name?.split(' ')[0] || ''}
@@ -94,14 +292,6 @@ export default function Dashboard() {
                                 </button>
                             </div>
                         )}
-                        <Link to="/community" className="btn-secondary !w-auto !py-2.5 !text-sm flex items-center gap-2">
-                            <Users size={16} />
-                            Community
-                        </Link>
-                        <Link to="/new-roadmap" className="btn-primary !w-auto !py-2.5 !text-sm shadow-brand/20 flex items-center gap-2">
-                            <Plus size={16} />
-                            Generate Path
-                        </Link>
                     </div>
                 </div>
 
@@ -119,84 +309,21 @@ export default function Dashboard() {
                         </Link>
                     </div>
                 ) : viewMode === 'tree' ? (
-                    <div className="h-[600px] rounded-3xl overflow-hidden border border-white/10 glass-card">
-                        {(() => {
-                            const { nodes, edges } = useMemo(() => {
-                                const n = [];
-                                const e = [];
-
-                                // Root Node
-                                n.push({
-                                    id: 'root',
-                                    data: { label: <div className="text-center"><strong>{user?.name?.split(' ')[0] || 'My'}'s Brain</strong></div> },
-                                    position: { x: 50, y: Math.max((roadmaps?.length || 0) * 100, 200) },
-                                    className: 'bg-[#0f111a] text-white font-bold border-2 border-brand/80 rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] p-4 w-[180px]',
-                                });
-
-                                (roadmaps || []).forEach((map, index) => {
-                                    const startY = index * 200 + 50;
-                                    const roadmapNodeId = `map-${map._id}`;
-
-                                    n.push({
-                                        id: roadmapNodeId,
-                                        data: { label: map.original_prompt },
-                                        position: { x: 350, y: startY },
-                                        className: 'bg-[#1a1d2d] text-white border border-accent/50 rounded-xl p-3 w-[180px] text-sm font-semibold shadow-lg',
-                                        sourcePosition: 'right',
-                                        targetPosition: 'left',
-                                    });
-
-                                    e.push({
-                                        id: `e-root-${roadmapNodeId}`,
-                                        source: 'root',
-                                        target: roadmapNodeId,
-                                        animated: true,
-                                        style: { stroke: '#ec4899', strokeWidth: 2, opacity: 0.7 }
-                                    });
-
-                                    let previousId = roadmapNodeId;
-                                    let xPos = 630;
-
-                                    map.nodes.forEach((node) => {
-                                        if (map.completed_node_ids.includes(node.id)) {
-                                            const nodeId = `node-${map._id}-${node.id}`;
-                                            n.push({
-                                                id: nodeId,
-                                                data: { label: node.title },
-                                                position: { x: xPos, y: startY + 10 },
-                                                className: 'bg-success/10 text-success border border-success/40 rounded-lg p-2 w-[160px] text-xs shadow-md',
-                                                sourcePosition: 'right',
-                                                targetPosition: 'left',
-                                            });
-                                            e.push({
-                                                id: `e-${previousId}-${nodeId}`,
-                                                source: previousId,
-                                                target: nodeId,
-                                                style: { stroke: '#10b981', strokeWidth: 2 }
-                                            });
-                                            previousId = nodeId;
-                                            xPos += 220;
-                                        }
-                                    });
-                                });
-                                return { nodes: n, edges: e };
-                            }, [roadmaps, user]);
-
-                            return (
-                                <ReactFlow
-                                    nodes={nodes}
-                                    edges={edges}
-                                    fitView
-                                    className="bg-[#050505]"
-                                >
-                                    <Background color="#fff" gap={16} size={1} opacity={0.05} />
-                                    <Controls className="fill-brand stroke-brand bg-white/5 border border-white/10" />
-                                </ReactFlow>
-                            );
-                        })()}
+                    <ReactFlowProvider>
+                    <div className="h-[800px] rounded-3xl overflow-hidden border border-white/10 glass-card">
+                        <ReactFlow
+                            nodes={nodes}
+                            edges={edges}
+                            fitView
+                            style={{ background: isDark ? '#050505' : '#f1f5f9' }}
+                        >
+                            <Background color={isDark ? '#fff' : '#94a3b8'} gap={16} size={1} opacity={isDark ? 0.05 : 0.3} />
+                            <Controls className="fill-brand stroke-brand bg-white/5 border border-white/10" />
+                        </ReactFlow>
                     </div>
+                    </ReactFlowProvider>
                 ) : (
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 2xl:grid-cols-5 gap-6">
                         {(roadmaps || []).map((map) => {
                             const totalNodes = map.nodes.length;
                             const completedNodes = map.completed_node_ids.length;
@@ -211,15 +338,22 @@ export default function Dashboard() {
 
                                     <div className="flex justify-between w-full mb-3 relative z-10">
                                         <span className="text-xs font-bold uppercase tracking-wider text-brand bg-brand/10 px-2 py-1 rounded-md">
-                                            Prompted Path
+                                            Personal Curriculum
                                         </span>
-                                        <div className="flex items-center gap-3">
+                                        <div className="flex items-center gap-2">
                                             <button
                                                 onClick={(e) => handleTogglePublish(e, map)}
                                                 className={`p-1.5 rounded-md transition-colors ${map.is_public ? 'bg-brand/20 text-brand' : 'bg-white/5 text-text-secondary hover:text-white hover:bg-white/10'}`}
                                                 title={map.is_public ? "Public on Community" : "Make Public"}
                                             >
                                                 {map.is_public ? <Globe size={14} /> : <Share2 size={14} />}
+                                            </button>
+                                            <button
+                                                onClick={(e) => handleTrash(e, map._id)}
+                                                className="p-1.5 rounded-md bg-white/5 text-text-secondary hover:text-red-400 hover:bg-red-500/10 transition-colors"
+                                                title="Move to Trash"
+                                            >
+                                                <Trash2 size={14} />
                                             </button>
                                             <span className="flex items-center text-xs text-text-secondary gap-1">
                                                 <Clock size={12} />
@@ -229,7 +363,7 @@ export default function Dashboard() {
                                     </div>
 
                                     <h3 className="text-xl font-heading font-semibold mb-2 line-clamp-2 leading-tight">
-                                        "{map.original_prompt}"
+                                        {toTitleCase(map.original_prompt)}
                                     </h3>
 
                                     <p className="text-sm text-text-secondary mb-6 mt-auto">
@@ -241,7 +375,7 @@ export default function Dashboard() {
                                             <span className="text-text-secondary">Progress</span>
                                             <span className={progressPct === 100 ? 'text-success' : 'text-accent'}>{progressPct}%</span>
                                         </div>
-                                        <div className="w-full h-2 bg-slate-800 rounded-full overflow-hidden">
+                                        <div className="w-full h-2 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden">
                                             <div
                                                 className={`h-full rounded-full transition-all duration-1000 ${progressPct === 100 ? 'bg-success' : 'bg-gradient-to-r from-brand to-accent'}`}
                                                 style={{ width: `${progressPct}%` }}

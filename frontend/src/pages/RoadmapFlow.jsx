@@ -41,11 +41,11 @@ export default function RoadmapFlow() {
     };
 
     return (
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 relative overflow-hidden">
+        <div className="min-h-screen py-10 px-4 md:px-8 w-full relative overflow-hidden">
 
-            {/* Background elements */}
-            <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-brand/5 rounded-full blur-[120px]" />
-            <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent/5 rounded-full blur-[120px]" />
+            {/* Background glows */}
+            <div className="absolute top-0 right-0 w-1/2 h-1/2 bg-brand/5 rounded-full blur-[120px] pointer-events-none" />
+            <div className="absolute bottom-0 left-0 w-1/2 h-1/2 bg-accent/5 rounded-full blur-[120px] pointer-events-none" />
 
             <AnimatePresence mode="wait">
                 {!isGenerating ? (
@@ -53,28 +53,16 @@ export default function RoadmapFlow() {
                         key="form"
                         initial={{ opacity: 0, y: 20 }}
                         animate={{ opacity: 1, y: 0 }}
-                        exit={{ opacity: 0, scale: 0.95 }}
+                        exit={{ opacity: 0, scale: 0.97 }}
                         transition={{ duration: 0.3 }}
-                        className="glass-card w-full max-w-2xl z-10 p-8 md:p-12"
+                        className="max-w-2xl mx-auto z-10 relative"
                     >
-                        {/* Back Button */}
-                        <div className="absolute top-4 md:top-8 left-4 md:left-8 z-20">
-                            <button
-                                onClick={() => navigate('/dashboard')}
-                                className="flex items-center text-text-secondary hover:text-white transition-colors"
-                            >
-                                <ArrowLeft className="w-5 h-5 mr-2" />
-                                Dashboard
-                            </button>
-                        </div>
-
-                        <div className="mb-8 text-center pt-8 md:pt-0">
-                            <div className="flex justify-center mb-6">
-                                <img src="/logo.png" alt="PathFindR Logo" className="w-20 h-20 rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] border border-white/10" />
-                            </div>
-                            <h1 className="text-3xl md:text-4xl font-heading font-bold mb-4">What do you want to learn?</h1>
-                            <p className="text-text-secondary text-lg">
-                                Type anything. Our AI will instantly map out a curated curriculum from absolute scratch.
+                        <div className="mb-10 text-center">
+                            <h1 className="text-4xl md:text-5xl font-heading font-bold mb-4 gradient-text">
+                                What do you want to learn?
+                            </h1>
+                            <p className="text-text-secondary text-lg max-w-xl mx-auto">
+                                Describe any skill or topic. Our AI will instantly map out a curated, step-by-step curriculum.
                             </p>
                         </div>
 
@@ -84,7 +72,7 @@ export default function RoadmapFlow() {
                             </div>
                         )}
 
-                        <form onSubmit={handleGenerate} className="space-y-6">
+                        <form onSubmit={handleGenerate} className="glass-card p-8 space-y-6">
                             <div>
                                 <textarea
                                     className="input-field min-h-[120px] text-lg leading-relaxed resize-none p-5"
@@ -103,23 +91,29 @@ export default function RoadmapFlow() {
                             <div>
                                 <label className="block text-sm font-heading font-medium mb-3">Preferred Learning Style</label>
                                 <div className="grid grid-cols-3 gap-3">
-                                    {['Visual (Video/Articles)', 'Hands-on (Projects)', 'Mixed (Both)'].map((style) => (
+                                    {[
+                                        { label: 'Visual', sub: 'Video & Articles', value: 'Visual (Video/Articles)' },
+                                        { label: 'Hands-on', sub: 'Projects & Practice', value: 'Hands-on (Projects)' },
+                                        { label: 'Mixed', sub: 'Both formats', value: 'Mixed (Both)' },
+                                    ].map((style) => (
                                         <button
-                                            key={style}
+                                            key={style.value}
                                             type="button"
-                                            onClick={() => setLearningStyle(style)}
-                                            className={`py-3 px-2 rounded-xl text-sm font-medium transition-all ${learningStyle === style
-                                                ? 'bg-brand/20 border-brand/50 text-brand outline outline-1 outline-brand/30 shadow-lg shadow-brand/10'
-                                                : 'bg-black/20 border-white/5 text-text-secondary hover:bg-black/40'
-                                                } border`}
+                                            onClick={() => setLearningStyle(style.value)}
+                                            className={`py-3 px-2 rounded-xl text-sm font-semibold transition-all border-2 flex flex-col items-center gap-1 ${
+                                                learningStyle === style.value
+                                                    ? 'border-brand bg-brand/15 text-brand shadow-lg shadow-brand/20'
+                                                    : 'border-gray-300 dark:border-white/10 bg-white/70 dark:bg-white/5 text-slate-600 dark:text-text-secondary hover:border-brand/40 hover:text-brand'
+                                            }`}
                                         >
-                                            {style.split(' ')[0]}
+                                            <span>{style.label}</span>
+                                            <span className="text-xs font-normal opacity-60">{style.sub}</span>
                                         </button>
                                     ))}
                                 </div>
                             </div>
 
-                            <div className="pt-4">
+                            <div className="pt-2">
                                 <button
                                     type="submit"
                                     className="btn-primary py-5 text-xl shadow-brand/25"
@@ -136,7 +130,7 @@ export default function RoadmapFlow() {
                         key="loading"
                         initial={{ opacity: 0, scale: 0.9 }}
                         animate={{ opacity: 1, scale: 1 }}
-                        className="flex flex-col items-center justify-center z-10"
+                        className="flex flex-col items-center justify-center min-h-[60vh] z-10"
                     >
                         <div className="relative mb-8">
                             <div className="absolute inset-0 bg-brand blur-2xl opacity-40 animate-pulse rounded-full"></div>
@@ -145,7 +139,7 @@ export default function RoadmapFlow() {
 
                         <h2 className="text-2xl font-heading font-bold mb-3 gradient-text">Consulting the AI...</h2>
                         <p className="text-text-secondary animate-pulse text-lg">
-                            Synthesizing milestones for "{prompt.slice(0, 30)}{prompt.length > 30 ? '...' : ''}"
+                            Synthesizing milestones for {prompt.slice(0, 30)}{prompt.length > 30 ? '...' : ''}
                         </p>
 
                         <div className="mt-12 flex items-center justify-center gap-1.5">
@@ -164,3 +158,4 @@ export default function RoadmapFlow() {
         </div>
     );
 }
+

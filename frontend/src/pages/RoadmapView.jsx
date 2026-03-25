@@ -8,6 +8,13 @@ import { useAuth } from '../context/AuthContext';
 
 const API_BASE = import.meta.env.VITE_API_BASE ? `${import.meta.env.VITE_API_BASE}/api` : '/api';
 
+const toTitleCase = (str) => {
+    if (!str) return '';
+    // Strip redundant leading/trailing quotes and apply title case
+    const cleanStr = str.trim().replace(/^["']|["']$/g, '');
+    return cleanStr.toLowerCase().replace(/\b\w/g, (c) => c.toUpperCase()).trim();
+};
+
 const generateGCalLink = (node) => {
     const text = encodeURIComponent(`Learning: ${node.title} `);
     const details = encodeURIComponent(`${node.description} `);
@@ -295,12 +302,12 @@ export default function RoadmapView() {
     };
 
     return (
-        <div className="min-h-screen py-8 px-4 md:px-8 max-w-4xl mx-auto pb-24">
+        <div className="min-h-screen py-8 px-4 md:px-8 w-full pb-24">
             {/* Header */}
             <div className="mb-10 flex items-center justify-between">
                 <button
                     onClick={() => navigate('/dashboard')}
-                    className="flex items-center text-text-secondary hover:text-white transition-colors"
+                    className="flex items-center text-text-secondary hover:text-brand transition-colors"
                 >
                     <ArrowLeft className="w-5 h-5 mr-2" />
                     Dashboard
@@ -350,12 +357,12 @@ export default function RoadmapView() {
                 </div>
             </div>
 
-            <div ref={targetRef} className="p-2 md:p-8 bg-[#0f111a] rounded-3xl -mx-2 md:-mx-8">
+            <div ref={targetRef} className="p-2 md:p-8 rounded-3xl -mx-2 md:-mx-8">
                 <div className="glass-card mb-12 p-8 relative overflow-hidden group">
                     <div className="absolute inset-0 bg-gradient-to-r from-brand/10 to-accent/10 opacity-50 group-hover:opacity-100 transition-opacity duration-700"></div>
                     <div className="relative z-10">
                         <h1 className="text-3xl lg:text-4xl font-heading font-bold mb-6 gradient-text" style={{ lineHeight: 1.3 }}>
-                            "{roadmap.original_prompt}"
+                            {toTitleCase(roadmap.original_prompt)}
                         </h1>
 
                         {/* Progress Bar Header */}
@@ -365,7 +372,7 @@ export default function RoadmapView() {
                                 {progressPercent}%
                             </span>
                         </div>
-                        <div className="w-full h-3 bg-slate-800 rounded-full overflow-hidden shadow-inner flex">
+                        <div className="w-full h-3 bg-slate-200 dark:bg-slate-800 rounded-full overflow-hidden shadow-inner flex">
                             <motion.div
                                 className={`h-full ${progressPercent === 100 ? 'bg-success' : 'bg-gradient-to-r from-brand to-accent'}`}
                                 initial={{ width: 0 }}
@@ -378,7 +385,7 @@ export default function RoadmapView() {
 
                 {/* Timeline */}
                 <div className="relative">
-                    <div className="absolute left-[39px] top-6 bottom-6 w-[2px] bg-white/10 hidden md:block" />
+                    <div className="absolute left-[39px] top-6 bottom-6 w-[2px] bg-slate-200 dark:bg-white/10 hidden md:block" />
 
                     {(isEditing ? editNodes : nodes).map((node, idx) => {
                         const isComplete = !isEditing && completedNodes.has(node.id);
@@ -402,7 +409,7 @@ export default function RoadmapView() {
                                             ? 'bg-success/20 text-success border-2 border-success shadow-[0_0_15px_rgba(16,185,129,0.3)]'
                                             : isNext
                                                 ? 'bg-brand/20 text-brand border-2 border-brand shadow-[0_0_20px_rgba(59,130,246,0.4)] animate-pulse'
-                                                : 'bg-black/40 text-text-secondary border-2 border-white/5 hover:border-brand/40 hover:text-brand'
+                                                : 'bg-slate-100 dark:bg-white/5 text-slate-400 dark:text-text-secondary border-2 border-slate-300 dark:border-white/10 hover:border-brand/40 hover:text-brand'
                                             }`}
                                     >
                                         {isLoading ? (
@@ -752,7 +759,6 @@ export default function RoadmapView() {
                     </motion.div>
                 )}
             </AnimatePresence>
-
         </div>
     );
 }

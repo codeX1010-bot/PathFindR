@@ -102,15 +102,84 @@ def save_ai_roadmap(user_id, prompt, roadmap_nodes):
     return str(result.inserted_id)
 
 def get_user_roadmaps(user_id):
-    """Retrieves all roadmaps saved by a specific user."""
-    roadmaps = list(roadmaps_collection.find({"user_id": user_id}).sort("created_at", -1))
+    """Retrieves all active (non-deleted) roadmaps saved by a specific user."""
+    roadmaps = list(roadmaps_collection.find({
+        "user_id": user_id,
+        "deleted_at": {"$exists": False}
+    }).sort("created_at", -1))
     for r in roadmaps:
         r['_id'] = str(r['_id'])
     return roadmaps
 
+def get_user_trash(user_id):
+    """Retrieves all soft-deleted roadmaps for a user."""
+    roadmaps = list(roadmaps_collection.find({
+        "user_id": user_id,
+        "deleted_at": {"$exists": True}
+    }).sort("deleted_at", -1))
+    for r in roadmaps:
+        r['_id'] = str(r['_id'])
+    return roadmaps
+
+def soft_delete_roadmap(roadmap_id, user_id):
+    """Soft-deletes a roadmap by setting a deleted_at timestamp (7-day TTL)."""
+    from bson.objectid import ObjectId
+    try:
+        result = roadmaps_collection.update_one(
+            {"_id": ObjectId(roadmap_id), "user_id": str(user_id)},
+            {"$set": {"deleted_at": datetime.utcnow()}}
+        )
+        return result.modified_count > 0
+    except:
+        return False
+
+def restore_roadmap(roadmap_id, user_id):
+    """Restores a soft-deleted roadmap by removing deleted_at."""
+    from bson.objectid import ObjectId
+    try:
+        result = roadmaps_collection.update_one(
+            {"_id": ObjectId(roadmap_id), "user_id": str(user_id)},
+            {"$unset": {"deleted_at": ""}}
+        )
+        return result.modified_count > 0
+    except:
+        return False
+
+def permanently_delete_roadmap(roadmap_id, user_id):
+    """Permanently removes a roadmap from the trash."""
+    from bson.objectid import ObjectId
+    try:
+        result = roadmaps_collection.delete_one(
+            {"_id": ObjectId(roadmap_id), "user_id": str(user_id), "deleted_at": {"$exists": True}}
+        )
+        return result.deleted_count > 0
+    except:
+        return False
+
+def ensure_trash_ttl_index():
+    """Creates a TTL index on deleted_at so MongoDB auto-purges after 7 days."""
+    try:
+        roadmaps_collection.create_index(
+            [("deleted_at", 1)],
+            expireAfterSeconds=604800,  # 7 days
+            name="trash_ttl_index",
+            background=True
+        )
+    except Exception as e:
+        print(f"TTL index error (may already exist): {e}")
+
+# Ensure TTL index is set up on import
+if roadmaps_collection is not None:
+    ensure_trash_ttl_index()
+
+
+
 def get_public_roadmaps():
     """Retrieves all public roadmaps by any user."""
-    roadmaps = list(roadmaps_collection.find({"is_public": True}).sort("created_at", -1).limit(50))
+    roadmaps = list(roadmaps_collection.find({
+        "is_public": True,
+        "deleted_at": {"$exists": False}
+    }).sort("created_at", -1).limit(50))
     for r in roadmaps:
         r['_id'] = str(r['_id'])
     return roadmaps
@@ -131,6 +200,18 @@ def toggle_roadmap_privacy(roadmap_id, user_id, is_public):
         result = roadmaps_collection.update_one(
             {"_id": ObjectId(roadmap_id), "user_id": str(user_id)},
             {"$set": {"is_public": is_public}}
+        )
+        return result.modified_count > 0
+    except:
+        return False
+
+def update_roadmap_nodes(user_id, roadmap_id, nodes):
+    """Replaces the nodes array of a roadmap (for editing/customization)."""
+    from bson.objectid import ObjectId
+    try:
+        result = roadmaps_collection.update_one(
+            {"_id": ObjectId(roadmap_id), "user_id": str(user_id)},
+            {"$set": {"nodes": nodes}}
         )
         return result.modified_count > 0
     except:

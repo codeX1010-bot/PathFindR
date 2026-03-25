@@ -14,7 +14,9 @@ from functools import wraps
 from mongo_db import (
     register_user, verify_user, get_user_by_id, 
     save_ai_roadmap, get_user_roadmaps, update_roadmap_progress,
-    update_roadmap_subprogress, get_public_roadmaps, get_roadmap_by_id, toggle_roadmap_privacy
+    update_roadmap_subprogress, get_public_roadmaps, get_roadmap_by_id, toggle_roadmap_privacy,
+    soft_delete_roadmap, restore_roadmap,
+    get_user_trash, permanently_delete_roadmap
 )
 from ai_engine import generate_ai_roadmap, validate_knowledge
 
@@ -118,13 +120,10 @@ def generate_roadmap(current_user):
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
         
-    # Call Gemini (Groq now)
+    # Call Gemini
     roadmap_nodes = generate_ai_roadmap(prompt, learning_style, current_skills)
     
     if not roadmap_nodes:
-        from ai_engine import client
-        if not client:
-             return jsonify({"error": "CRITICAL CONFIG ERROR: You forgot to add GROQ_API_KEY to your Vercel Environment Variables dashboard! The API key only exists on your local machine."}), 500
         return jsonify({"error": "Failed to generate roadmap from AI. Try again."}), 500
         
     # Save the generated roadmap structurally to MongoDB
@@ -228,6 +227,38 @@ def mark_subprogress(current_user, roadmap_id):
 @app.route('/api/health', methods=['GET'])
 def health_check():
     return jsonify({"status": "running"}), 200
+
+# ---- Trash Endpoints ----
+
+@app.route('/api/trash', methods=['GET'])
+@token_required
+def get_trash(current_user):
+    roadmaps = get_user_trash(str(current_user['_id']))
+    return jsonify({"roadmaps": roadmaps}), 200
+
+@app.route('/api/roadmaps/<roadmap_id>/trash', methods=['POST'])
+@token_required
+def move_to_trash(current_user, roadmap_id):
+    success = soft_delete_roadmap(roadmap_id, str(current_user['_id']))
+    if success:
+        return jsonify({"message": "Moved to trash"}), 200
+    return jsonify({"error": "Failed to move to trash"}), 500
+
+@app.route('/api/roadmaps/<roadmap_id>/restore', methods=['POST'])
+@token_required
+def restore_from_trash(current_user, roadmap_id):
+    success = restore_roadmap(roadmap_id, str(current_user['_id']))
+    if success:
+        return jsonify({"message": "Restored successfully"}), 200
+    return jsonify({"error": "Failed to restore"}), 500
+
+@app.route('/api/roadmaps/<roadmap_id>', methods=['DELETE'])
+@token_required
+def delete_roadmap_permanently(current_user, roadmap_id):
+    success = permanently_delete_roadmap(roadmap_id, str(current_user['_id']))
+    if success:
+        return jsonify({"message": "Permanently deleted"}), 200
+    return jsonify({"error": "Failed to delete"}), 500
 
 @app.route('/api/progress/validate', methods=['POST'])
 @token_required
