@@ -27,6 +27,12 @@ CORS(app, resources={r"/*": {"origins": "*"}})
 # JWT Secret
 app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_development_secret_key_123')
 
+@app.errorhandler(Exception)
+def handle_exception(e):
+    import traceback
+    print(traceback.format_exc())
+    return jsonify({"error": str(e), "type": type(e).__name__}), 500
+
 # --- Middleware ---
 
 def token_required(f):

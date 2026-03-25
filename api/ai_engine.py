@@ -9,11 +9,11 @@ from dotenv import load_dotenv
 load_dotenv()
 
 GROQ_API_KEY = os.getenv("GROQ_API_KEY")
-if not GROQ_API_KEY:
-    raise ValueError("No GROQ_API_KEY set in .env file")
 
-# Initialize the Groq client
-client = Groq(api_key=GROQ_API_KEY)
+# Initialize the Groq client safely so Vercel doesn't crash on import if env is missing
+client = None
+if GROQ_API_KEY:
+    client = Groq(api_key=GROQ_API_KEY)
 
 # Use Llama-3 for high speed and reasoning
 MODEL_NAME = "llama-3.3-70b-versatile"
@@ -63,6 +63,9 @@ def generate_ai_roadmap(prompt, learning_style, current_skills):
     - "article_link": A Google search phrase for reading material (e.g. "React Hooks tutorial documentation"). Do NOT provide URLs.
     - "podcast_link": A Spotify search phrase for a podcast (e.g. "React Hooks podcast"). Do NOT provide URLs.
     """
+
+    if not client:
+        return None
 
     try:
         chat_completion = client.chat.completions.create(
@@ -143,6 +146,9 @@ def validate_knowledge(node_title, node_description, user_answer):
         "feedback": "A short, encouraging sentence explaining why they passed or what they misunderstood."
     }}
     """
+    if not client:
+        return {"passed": False, "feedback": "Error: GROQ_API_KEY is missing on the server."}
+
     try:
         chat_completion = client.chat.completions.create(
             messages=[

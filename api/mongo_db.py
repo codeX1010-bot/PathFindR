@@ -1,29 +1,39 @@
 import os
 from pymongo import MongoClient
 from dotenv import load_dotenv
-import bcrypt
 from datetime import datetime
 
 load_dotenv()
 
 MONGO_URI = os.getenv("MONGO_URI")
-if not MONGO_URI:
-    raise ValueError("No MONGO_URI set in .env file")
+client = None
+db = None
 
-client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
-db = client.pathfindr_db  # Create or use the pathfindr_db database
+if MONGO_URI:
+    try:
+        client = MongoClient(MONGO_URI, serverSelectionTimeoutMS=5000)
+        db = client.pathfindr_db
+    except Exception as e:
+        print(f"Error connecting to MongoDB: {e}")
+else:
+    print("Error: MONGO_URI is missing on the server.")
 
 # Collections
-users_collection = db.users
-curriculum_collection = db.curriculum
-roadmaps_collection = db.roadmaps  # New collection for saved AI roadmaps
+users_collection = db.users if db is not None else None
+curriculum_collection = db.curriculum if db is not None else None
+roadmaps_collection = db.roadmaps if db is not None else None
 
 # --- Auth Functions ---
 
 def register_user(email, password, name):
     """Registers a new user with a hashed password."""
     try:
+        import bcrypt
+        
         # Check if user already exists
+        if users_collection is None:
+            return None, "Database connection error"
+            
         if users_collection.find_one({"email": email}):
             return None, "User already exists"
             
@@ -47,6 +57,11 @@ def register_user(email, password, name):
 def verify_user(email, password):
     """Verifies a user's credentials."""
     try:
+        import bcrypt
+        
+        if users_collection is None:
+            return None
+
         user = users_collection.find_one({"email": email})
         if not user:
             return None
