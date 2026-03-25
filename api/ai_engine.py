@@ -5,6 +5,7 @@ import urllib.parse
 import urllib.request
 import re
 from dotenv import load_dotenv
+import concurrent.futures
 
 load_dotenv()
 
@@ -88,8 +89,8 @@ def generate_ai_roadmap(prompt, learning_style, current_skills):
             
         roadmap_nodes = json.loads(response_text)
         
-        # Post-process: Fetch real YouTube links and construct reliable search links
-        for node in roadmap_nodes:
+        # Parallelize the HTTP requests to YouTube to prevent Vercel 10s timeout
+        def process_node_links(node):
             # Video Link
             if "video_link" in node and node["video_link"]:
                 query = node["video_link"]
@@ -118,6 +119,9 @@ def generate_ai_roadmap(prompt, learning_style, current_skills):
             else:
                 query = f"{node['title']} podcast"
                 node["podcast_link"] = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
+                
+        with concurrent.futures.ThreadPoolExecutor(max_workers=10) as executor:
+            executor.map(process_node_links, roadmap_nodes)
 
         return roadmap_nodes
         
