@@ -18,10 +18,13 @@ export default function Dashboard() {
     useEffect(() => {
         const fetchRoadmaps = async () => {
             try {
-                const response = await axios.get(`${API_BASE}/roadmaps`);
-                setRoadmaps(response.data.roadmaps);
+                const response = await axios.get(`${API_BASE}/roadmaps`, {
+                    headers: { 'Authorization': `Bearer ${user?.token}` }
+                });
+                setRoadmaps(response.data.roadmaps || []);
             } catch (err) {
                 console.error("Failed to fetch roadmaps", err);
+                setRoadmaps([]);
             } finally {
                 setIsLoading(false);
             }
@@ -55,7 +58,7 @@ export default function Dashboard() {
                     <img src="/logo.png" alt="PathFindR Logo" className="w-12 h-12 rounded-xl shadow-[0_0_10px_rgba(236,72,153,0.2)] border border-white/10" />
                     <div>
                         <h1 className="text-3xl font-heading font-bold text-transparent bg-clip-text bg-gradient-to-r from-brand to-accent">
-                            Welcome back, {user?.name.split(' ')[0]}
+                            Welcome back, {user?.name?.split(' ')[0] || ''}
                         </h1>
                         <p className="text-text-secondary mt-1">Ready to continue your journey?</p>
                     </div>
@@ -75,7 +78,7 @@ export default function Dashboard() {
                     <h2 className="text-2xl font-heading font-semibold">Your Learning Paths</h2>
 
                     <div className="flex flex-wrap items-center gap-4">
-                        {roadmaps.length > 0 && (
+                        {(roadmaps?.length || 0) > 0 && (
                             <div className="bg-white/5 border border-white/10 p-1 rounded-lg flex items-center">
                                 <button
                                     onClick={() => setViewMode('list')}
@@ -126,11 +129,11 @@ export default function Dashboard() {
                                 n.push({
                                     id: 'root',
                                     data: { label: <div className="text-center"><strong>{user?.name?.split(' ')[0] || 'My'}'s Brain</strong></div> },
-                                    position: { x: 50, y: Math.max(roadmaps.length * 100, 200) },
+                                    position: { x: 50, y: Math.max((roadmaps?.length || 0) * 100, 200) },
                                     className: 'bg-[#0f111a] text-white font-bold border-2 border-brand/80 rounded-2xl shadow-[0_0_20px_rgba(236,72,153,0.3)] p-4 w-[180px]',
                                 });
 
-                                roadmaps.forEach((map, index) => {
+                                (roadmaps || []).forEach((map, index) => {
                                     const startY = index * 200 + 50;
                                     const roadmapNodeId = `map-${map._id}`;
 
@@ -194,7 +197,7 @@ export default function Dashboard() {
                     </div>
                 ) : (
                     <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                        {roadmaps.map((map) => {
+                        {(roadmaps || []).map((map) => {
                             const totalNodes = map.nodes.length;
                             const completedNodes = map.completed_node_ids.length;
                             const progressPct = Math.round((completedNodes / totalNodes) * 100) || 0;

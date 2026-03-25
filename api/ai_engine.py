@@ -1,20 +1,41 @@
 import os
-from google import genai
+from groq import Groq
 import json
+import urllib.parse
 from dotenv import load_dotenv
+from youtubesearchpython import VideosSearch
 
 load_dotenv()
 
-GEMINI_API_KEY = os.getenv("GEMINI_API_KEY")
-if not GEMINI_API_KEY:
-    raise ValueError("No GEMINI_API_KEY set in .env file")
+GROQ_API_KEY = os.getenv("GROQ_API_KEY")
+if not GROQ_API_KEY:
+    raise ValueError("No GROQ_API_KEY set in .env file")
 
-# Initialize the new SDK client
-client = genai.Client(api_key=GEMINI_API_KEY)
+# Initialize the Groq client
+client = Groq(api_key=GROQ_API_KEY)
+
+# Use Llama-3 for high speed and reasoning
+MODEL_NAME = "llama-3.3-70b-versatile"
+
+def get_top_youtube_link(query):
+    """
+    Fetches the actual link of the top YouTube search result for a given query.
+    If it fails, it returns a standard YouTube search URL.
+    """
+    try:
+        videos_search = VideosSearch(query, limit=1)
+        results = videos_search.result()
+        if results and results.get('result') and len(results['result']) > 0:
+            return results['result'][0]['link']
+    except Exception as e:
+        print(f"YouTube search error for '{query}': {e}")
+    
+    # Fallback to search query link
+    return f"https://www.youtube.com/results?search_query={urllib.parse.quote(query)}"
 
 def generate_ai_roadmap(prompt, learning_style, current_skills):
     """
-    Calls the Gemini API to generate a structured JSON roadmap.
+    Calls the Groq API to generate a structured JSON roadmap.
     """
     system_instruction = f"""
     You are PathFindR, an advanced AI learning GPS. The user wants to learn exactly what they prompted: "{prompt}".
@@ -32,29 +53,53 @@ def generate_ai_roadmap(prompt, learning_style, current_skills):
     - "estimated_time_mins": An integer representing how many minutes this step takes
     - "difficulty_level": An integer from 1 (Beginner) to 5 (Master)
     - "checklist": An array of 3 specific, actionable mini-goals or concepts to master within this step.
-    - "video_link": A highly relevant direct YouTube URL for this specific topic step.
-    - "article_link": A highly relevant direct URL to an official documentation page, blog, or written tutorial (like MDN, Python.org, etc).
-    - "podcast_link": A highly relevant direct URL to a podcast episode, audio-friendly deep dive, or an audio guide if applicable. Provide URLs with high confidence to prevent 404s.
+    - "video_link": A highly specific YouTube search phrase (e.g. "React Hooks full course 2024"). Do NOT provide URLs.
+    - "article_link": A Google search phrase for reading material (e.g. "React Hooks tutorial documentation"). Do NOT provide URLs.
+    - "podcast_link": A Spotify search phrase for a podcast (e.g. "React Hooks podcast"). Do NOT provide URLs.
     """
 
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=system_instruction
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": system_instruction
+                }
+            ],
+            model=MODEL_NAME,
+            temperature=0.5,
         )
         
-        # Strip any accidental markdown formatting the model might add 
-        response_text = response.text.strip()
+        # Strip any accidental markdown formatting
+        response_text = chat_completion.choices[0].message.content.strip()
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.endswith("```"):
             response_text = response_text[:-3]
             
         roadmap_nodes = json.loads(response_text)
+        
+        # Post-process: Fetch real YouTube links for the generated queries
+        for node in roadmap_nodes:
+            if "video_link" in node and node["video_link"]:
+                query = node["video_link"]
+                if not query.startswith("http"):
+                    node["video_link"] = get_top_youtube_link(query)
+            
+            if "article_link" in node and node["article_link"]:
+                query = node["article_link"]
+                if not query.startswith("http"):
+                    node["article_link"] = f"https://www.google.com/search?q={urllib.parse.quote(query)}"
+            
+            if "podcast_link" in node and node["podcast_link"]:
+                query = node["podcast_link"]
+                if not query.startswith("http"):
+                    node["podcast_link"] = f"https://open.spotify.com/search/{urllib.parse.quote(query)}"
+
         return roadmap_nodes
         
     except Exception as e:
-        print(f"Error calling Gemini API: {e}")
+        print(f"Error calling Groq API: {e}")
         return None
 
 def validate_knowledge(node_title, node_description, user_answer):
@@ -79,12 +124,18 @@ def validate_knowledge(node_title, node_description, user_answer):
     }}
     """
     try:
-        response = client.models.generate_content(
-            model='gemini-2.5-flash',
-            contents=system_instruction
+        chat_completion = client.chat.completions.create(
+            messages=[
+                {
+                    "role": "user",
+                    "content": system_instruction
+                }
+            ],
+            model=MODEL_NAME,
+            temperature=0.2,
         )
         
-        response_text = response.text.strip()
+        response_text = chat_completion.choices[0].message.content.strip()
         if response_text.startswith("```json"):
             response_text = response_text[7:]
         if response_text.endswith("```"):
@@ -92,5 +143,5 @@ def validate_knowledge(node_title, node_description, user_answer):
             
         return json.loads(response_text)
     except Exception as e:
-        print(f"Error validating knowledge: {e}")
+        print(f"Error validating knowledge with Groq: {e}")
         return {"passed": False, "feedback": "Sorry, the AI tutor is currently unavailable. Try again later."}

@@ -32,6 +32,9 @@ app.config['SECRET_KEY'] = os.getenv('SECRET_KEY', 'fallback_development_secret_
 def token_required(f):
     @wraps(f)
     def decorated(*args, **kwargs):
+        if request.method == 'OPTIONS':
+            return jsonify({}), 200
+
         token = None
         # Handle Bearer token in headers
         if 'Authorization' in request.headers:

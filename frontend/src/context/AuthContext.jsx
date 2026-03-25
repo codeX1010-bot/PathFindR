@@ -10,30 +10,39 @@ export const AuthProvider = ({ children }) => {
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
+        // Axios interceptor to always attach token from localStorage
+        const requestInterceptor = axios.interceptors.request.use(config => {
+            const token = localStorage.getItem('pathfindr_token');
+            if (token) {
+                config.headers.Authorization = `Bearer ${token}`;
+            }
+            return config;
+        });
+
         // Check local storage for token on load
         const token = localStorage.getItem('pathfindr_token');
         const storedUser = localStorage.getItem('pathfindr_user');
 
         if (token && storedUser) {
             setUser(JSON.parse(storedUser));
-            // Setup default axios auth header
-            axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
         }
         setLoading(false);
+
+        return () => {
+             axios.interceptors.request.eject(requestInterceptor);
+        };
     }, []);
 
     const login = (token, userData) => {
         localStorage.setItem('pathfindr_token', token);
         localStorage.setItem('pathfindr_user', JSON.stringify(userData));
         setUser(userData);
-        axios.defaults.headers.common['Authorization'] = `Bearer ${token}`;
     };
 
     const logout = () => {
         localStorage.removeItem('pathfindr_token');
         localStorage.removeItem('pathfindr_user');
         setUser(null);
-        delete axios.defaults.headers.common['Authorization'];
     };
 
     return (
