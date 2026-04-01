@@ -35,7 +35,7 @@ export default function RoadmapFlow() {
 
             navigate('/roadmap', { state: { roadmap: newRoadmap } });
         } catch (err) {
-            setError(err.response?.data?.error || "Failed to generate roadmap. Gemini API might be busy.");
+            setError(err.response?.data?.error || "Failed to generate roadmap. Groq might be busy.");
             setIsGenerating(false);
         }
     };

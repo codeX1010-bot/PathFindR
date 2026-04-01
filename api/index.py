@@ -120,7 +120,7 @@ def generate_roadmap(current_user):
     if not prompt:
         return jsonify({"error": "Prompt is required"}), 400
         
-    # Call Gemini
+    # Call Groq
     roadmap_nodes = generate_ai_roadmap(prompt, learning_style, current_skills)
     
     if not roadmap_nodes:
